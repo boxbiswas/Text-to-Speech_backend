@@ -25,7 +25,7 @@ app.use(cookieParser());
 
 
 // Import routes
-import authRoute from './Routes/authRoute.js';
+import authRoute from './routes/authRoute.js';
 import ttsRoute from './routes/ttsRoutes.js';
 
 // Use routes

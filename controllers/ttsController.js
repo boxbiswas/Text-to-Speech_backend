@@ -4,12 +4,34 @@ export const getVoices = async (req, res) => {
     try {
         const voices = await getProviderVoices();
 
-        // Extract unique languages for the frontend
-        const uniqueLanguages = Array.from(new Set(voices.map(v => v.languageCode)))
-            .map(code => {
-                const voice = voices.find(v => v.languageCode === code);
-                return { code: voice.languageCode, name: voice.languageName };
-            });
+        // Extract all supported languages (primary and additional) for the frontend
+        const languageMap = new Map();
+        
+        voices.forEach(voice => {
+            // Add primary language
+            if (!languageMap.has(voice.languageCode)) {
+                languageMap.set(voice.languageCode, voice.languageName);
+            }
+            
+            // Add additional languages (crucial for bilingual voices like Aditi who supports hi-IN)
+            if (voice.additionalLanguageCodes) {
+                voice.additionalLanguageCodes.forEach(code => {
+                    if (!languageMap.has(code)) {
+                        // Polly doesn't return the display name for additional languages in the voice object, 
+                        // so we map common ones manually, or just use the code if unknown
+                        let name = code;
+                        if (code === 'hi-IN') name = 'Hindi';
+                        if (code === 'en-IN') name = 'Indian English';
+                        languageMap.set(code, name);
+                    }
+                });
+            }
+        });
+
+        const uniqueLanguages = Array.from(languageMap.entries()).map(([code, name]) => ({ code, name }));
+
+        // Sort alphabetically by name
+        uniqueLanguages.sort((a, b) => a.name.localeCompare(b.name));
 
         return res.status(200).json({
             languages: uniqueLanguages,
@@ -40,7 +62,7 @@ export const generateSpeech = async (req, res) => {
         if (!selectedVoice) {
             return res.status(400).json({ message: 'Invalid voice selected' });
         }
-        if (selectedVoice.languageCode !== language) {
+        if (selectedVoice.languageCode !== language && (!selectedVoice.additionalLanguageCodes || !selectedVoice.additionalLanguageCodes.includes(language))) {
             return res.status(400).json({ message: 'Voice does not match the selected language' });
         }
 
