@@ -45,7 +45,7 @@ export const getVoices = async (req, res) => {
 
 export const generateSpeech = async (req, res) => {
     try {
-        const { text, language, voice } = req.body;
+        const { text, language, voice, format = 'mp3' } = req.body;
 
         // 1. Validate body
         if (!text || !language || !voice) {
@@ -67,7 +67,7 @@ export const generateSpeech = async (req, res) => {
         }
 
         // 4 & 5. TTS Service - Generate audio
-        const audioUrl = await generateAudio(text, language, voice);
+        const audioUrl = await generateAudio(text, language, voice, format);
 
         // 6. Return Audio URL
         return res.status(200).json({

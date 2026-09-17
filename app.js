@@ -27,10 +27,12 @@ app.use(cookieParser());
 // Import routes
 import authRoute from './routes/authRoute.js';
 import ttsRoute from './routes/ttsRoutes.js';
+import historyRoute from './routes/historyRoute.js';
 
 // Use routes
 app.use('/auth', authRoute);
 app.use('/tts', ttsRoute);
+app.use('/history', historyRoute);
 
 const PORT = process.env.PORT;
 

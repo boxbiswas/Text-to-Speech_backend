@@ -79,11 +79,16 @@ export const getProviderVoices = async () => {
     ------------------------------------------------*/
 };
 
-export const generateAudio = async (text, language, voice) => {
+export const generateAudio = async (text, language, voice, format = 'mp3') => {
     // --- AMAZON POLLY IMPLEMENTATION ---
     const client = getPollyClient();
+    
+    // Map our internal format to Polly's OutputFormat
+    const pollyOutputFormat = format === 'ogg' ? 'ogg_vorbis' : 'mp3';
+    const mimeType = format === 'ogg' ? 'audio/ogg' : 'audio/mp3';
+
     const command = new SynthesizeSpeechCommand({
-        OutputFormat: 'mp3',
+        OutputFormat: pollyOutputFormat,
         Text: text,
         VoiceId: voice,
         Engine: 'neural' // Default to neural, the fallback below will handle standard
@@ -93,18 +98,18 @@ export const generateAudio = async (text, language, voice) => {
         const response = await client.send(command);
         const byteArray = await response.AudioStream.transformToByteArray();
         const buffer = Buffer.from(byteArray);
-        return `data:audio/mp3;base64,${buffer.toString('base64')}`;
+        return `data:${mimeType};base64,${buffer.toString('base64')}`;
     } catch (error) {
         console.error("Polly SynthesizeSpeech Error:", error);
         if (error.message.includes('engine is not supported') || error.message.includes('does not support the selected engine')) {
             console.log(`Falling back to standard engine for voice: ${voice}`);
             const standardCommand = new SynthesizeSpeechCommand({
-                OutputFormat: 'mp3', Text: text, VoiceId: voice, Engine: 'standard'
+                OutputFormat: pollyOutputFormat, Text: text, VoiceId: voice, Engine: 'standard'
             });
             const standardResponse = await client.send(standardCommand);
             const byteArray = await standardResponse.AudioStream.transformToByteArray();
             const buffer = Buffer.from(byteArray);
-            return `data:audio/mp3;base64,${buffer.toString('base64')}`;
+            return `data:${mimeType};base64,${buffer.toString('base64')}`;
         }
         throw new Error(`Failed to generate audio from Amazon Polly: ${error.message}`);
     }
