@@ -41,18 +41,8 @@ export const register = async (req, res) => {
             }
         });
 
-        // Generate JWT
-        const token = jwt.sign(
-            { id: newUser.id, email: newUser.email },
-            process.env.JWT_SECRET,
-            { expiresIn: '7d' }
-        );
-
-        // Set cookie and respond (exclude passwordHash from response)
-        res.cookie('token', token, getCookieOptions());
-
         return res.status(201).json({
-            message: 'Registration successful',
+            message: 'Registration successful. Please log in.',
             user: { id: newUser.id, name: newUser.name, email: newUser.email }
         });
 
